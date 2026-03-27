@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TutorPro - Quản lý dạy thêm Pastel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(145deg, #f9f1e0 0%, #f3e7d9 50%, #ffe6f0 100%);
+            min-height: 100vh;
+        }
+        /* Glassmorphism style cho card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 2rem;
+            overflow: hidden;
+        }
+        .day-cell {
+            min-height: 92px;
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+            border-right: 1px solid rgba(255, 245, 235, 0.8);
+            border-bottom: 1px solid rgba(255, 245, 235, 0.8);
+        }
+        .day-cell:hover {
+            background: rgba(255, 248, 225, 0.9);
+            transform: scale(1.01);
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .today {
+            background: rgba(255, 226, 183, 0.7) !important;
+            border: 2px solid #f59e0b !important;
+            box-shadow: 0 0 0 2px white inset, 0 0 0 4px #ffedd5;
+        }
+        .has-class {
+            background: rgba(165, 243, 212, 0.4);
+        }
+        .dot {
+            height: 7px;
+            width: 7px;
+            background-color: #f97316;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 1px;
+            box-shadow: 0 0 0 1px rgba(255,255,200,0.8);
+        }
+        /* Custom scroll */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fbc4ab;
+            border-radius: 10px;
+        }
+        .familiar-btn {
+            transition: all 0.2s;
+        }
+        .familiar-btn:hover {
+            transform: scale(1.05);
+            background-color: #facc15;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="pb-16">
+
+    <header class="sticky top-0 z-40 px-5 py-4 flex justify-between items-center glass-card shadow-sm rounded-b-3xl mx-2 mt-1">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-amber-400 to-rose-400 p-2.5 rounded-2xl shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-stone-700 to-amber-800 bg-clip-text text-transparent">Tutor<span class="text-amber-600">Pastel</span></h1>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="changeMonth(-1)" class="p-2 rounded-full bg-white/60 hover:bg-white shadow-sm transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></button>
+            <span id="currentMonthYear" class="font-extrabold text-slate-700 text-lg min-w-[140px] text-center">Tháng 03, 2026</span>
+            <button onclick="changeMonth(1)" class="p-2 rounded-full bg-white/60 hover:bg-white shadow-sm transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-7">
+        <!-- Calendar -->
+        <div class="glass-card rounded-3xl p-1 mb-8 shadow-xl">
+            <div class="calendar-grid bg-amber-50/40 rounded-t-3xl text-center py-3 text-[11px] font-black text-stone-400 uppercase tracking-wider">
+                <div>THỨ 2</div><div>THỨ 3</div><div>THỨ 4</div><div>THỨ 5</div><div>THỨ 6</div><div class="text-amber-500">THỨ 7</div><div class="text-rose-400">CN</div>
+            </div>
+            <div id="calendarDays" class="calendar-grid rounded-b-3xl"></div>
+        </div>
+
+        <!-- Dashboard cards pastel -->
+        <div class="grid grid-cols-2 gap-5 mb-9">
+            <div class="bg-gradient-to-br from-rose-200 to-orange-200 rounded-3xl p-5 shadow-md backdrop-blur-sm border border-white/60">
+                <p class="text-orange-800 text-xs font-black uppercase tracking-wider">💰 Tổng thu tháng này</p>
+                <p id="totalRevenue" class="text-3xl font-black text-stone-800 mt-1">0đ</p>
+            </div>
+            <div class="bg-gradient-to-br from-teal-200 to-emerald-200 rounded-3xl p-5 shadow-md">
+                <p class="text-emerald-800 text-xs font-black uppercase tracking-wider">📚 Tổng buổi dạy</p>
+                <p id="totalLessons" class="text-3xl font-black text-stone-800 mt-1">0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-7">
+            <!-- Danh sách học sinh (có nút lưu) -->
+            <div class="lg:col-span-1">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-7 bg-amber-400 rounded-full"></span>
+                    <h2 class="text-xl font-black text-stone-700">⭐ Học sinh quen</h2>
+                </div>
+                <div id="familiarStudentsList" class="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                    <!-- dynamic familiar students -->
+                </div>
+                <div class="mt-4 text-center text-[11px] font-medium text-stone-400">✨ Nhấn ⭐ để nhanh chóng thêm buổi học</div>
+            </div>
+
+            <!-- Bảng chi tiết tháng & bảng lịch sử -->
+            <div class="lg:col-span-2">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-7 bg-blue-400 rounded-full"></span>
+                    <h2 class="text-xl font-black text-stone-700">📆 Chi tiết buổi học tháng này</h2>
+                </div>
+                <div class="glass-card rounded-3xl overflow-hidden border-0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-amber-50/80">
+                                <tr class="text-stone-400 text-[10px] uppercase font-black tracking-wider">
+                                    <th class="p-4">Ngày</th><th class="p-4">Học sinh</th><th class="p-4 text-right">Học phí</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lessonTableBody" class="divide-y divide-stone-100/80 bg-white/40">
+                                <!-- data -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL -->
+    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end md:items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-7 shadow-2xl transform translate-y-full md:translate-y-0 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalDateTitle" class="text-2xl font-black text-amber-700">Ngày dạy</h3>
+                <button onclick="closeModal()" class="bg-stone-100 p-2 rounded-full text-stone-400 hover:text-stone-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            </div>
+            <div id="existingLessons" class="mb-5 space-y-2 max-h-44 overflow-y-auto pr-1 bg-stone-50/50 rounded-2xl p-2"></div>
+
+            <div class="border-t border-amber-100 pt-5">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] font-black text-stone-400 uppercase">Học sinh</label>
+                        <input type="text" id="studentName" placeholder="Tên học sinh..." class="w-full p-3 bg-stone-50 rounded-2xl border border-stone-100 focus:border-amber-300 outline-none font-medium">
+                        <!-- Gợi ý từ danh sách quen (datalist nhẹ) -->
+                        <datalist id="familiarDatalist"></datalist>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-1"><label class="text-[10px] font-black text-stone-400 uppercase">Giờ học</label><input type="time" id="lessonTime" value="18:00" class="w-full p-3 bg-stone-50 rounded-2xl border"></div>
+                        <div class="flex-1"><label class="text-[10px] font-black text-stone-400 uppercase">Học phí (đ)</label><input type="number" id="lessonFee" placeholder="150.000" class="w-full p-3 bg-stone-50 rounded-2xl border"></div>
+                    </div>
+                    <button onclick="saveLesson()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all mt-2">➕ Thêm buổi học</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDateStr = "";
+        // Cấu trúc: lessons theo ngày + danh sách học sinh quen kèm học phí mặc định
+        let db = JSON.parse(localStorage.getItem('tutorPastelDB')) || { lessons: {}, familiarStudents: {} };
+        
+        // Hàm đồng bộ
+        function syncAll() {
+            localStorage.setItem('tutorPastelDB', JSON.stringify(db));
+            renderCalendar();
+            renderStatsAndTable();
+            renderFamiliarList();
+            updateDatalist();
+        }
+
+        // Cập nhật datalist gợi ý
+        function updateDatalist() {
+            let datalist = document.getElementById('familiarDatalist');
+            if (!datalist) {
+                const newList = document.createElement('datalist');
+                newList.id = 'familiarDatalist';
+                document.body.appendChild(newList);
+                datalist = newList;
+            }
+            datalist.innerHTML = '';
+            Object.keys(db.familiarStudents).forEach(name => {
+                let opt = document.createElement('option');
+                opt.value = name;
+                datalist.appendChild(opt);
+            });
+            const input = document.getElementById('studentName');
+            if(input) input.setAttribute('list', 'familiarDatalist');
+        }
+
+        // Render danh sách học sinh quen kèm nút lưu & số buổi
+        function renderFamiliarList() {
+            const container = document.getElementById('familiarStudentsList');
+            if (!container) return;
+            const familiarMap = db.familiarStudents || {};
+            // tính tổng buổi và tổng tiền cho mỗi học sinh dựa trên lessons
+            let lessonCountMap = {};
+            let totalMoneyMap = {};
+            for (let dateKey in db.lessons) {
+                db.lessons[dateKey].forEach(ls => {
+                    if(!lessonCountMap[ls.name]) lessonCountMap[ls.name] = 0;
+                    if(!totalMoneyMap[ls.name]) totalMoneyMap[ls.name] = 0;
+                    lessonCountMap[ls.name]++;
+                    totalMoneyMap[ls.name] += ls.fee;
+                });
+            }
+            
+            if(Object.keys(familiarMap).length === 0) {
+                container.innerHTML = `<div class="glass-card p-4 text-center text-stone-400 text-sm italic">⭐ Nhập học sinh mới → tự động lưu danh sách quen</div>`;
+                return;
+            }
+            
+            let html = '';
+            for (let [name, data] of Object.entries(familiarMap)) {
+                const feeDefault = data.defaultFee || 0;
+                const totalBuoi = lessonCountMap[name] || 0;
+                const totalTien = totalMoneyMap[name] || 0;
+                html += `
+                    <div class="glass-card p-4 rounded-2xl flex justify-between items-center group transition-all hover:shadow-md">
+                        <div class="flex-1">
+                            <div class="font-black text-stone-800 text-base">${escapeHtml(name)}</div>
+                            <div class="flex gap-3 text-[11px] font-bold mt-0.5">
+                                <span class="text-amber-600">💰 ${formatMoney(feeDefault)}đ/buổi</span>
+                                <span class="text-stone-400">📘 ${totalBuoi} buổi</span>
+                            </div>
+                        </div>
+                        <button onclick="quickAddLesson('${escapeHtml(name)}', ${feeDefault})" class="familiar-btn bg-amber-100 p-2 rounded-xl text-amber-700 hover:bg-amber-300 transition-all shadow-sm" title="Dạy ngay với học phí mặc định">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                        </button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+        
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        
+        // Thêm nhanh học sinh quen (tự động mở modal nếu chưa mở, hoặc fill)
+        function quickAddLesson(studentName, defaultFee) {
+            // kiểm tra nếu modal chưa mở, cần mở modal với ngày hiện tại (hoặc lấy ngày đang chọn)
+            let targetDate = selectedDateStr;
+            if(!targetDate) {
+                // nếu chưa chọn ngày, lấy ngày hôm nay
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth()+1).padStart(2,'0');
+                const dd = String(today.getDate()).padStart(2,'0');
+                targetDate = `${yyyy}-${mm}-${dd}`;
+                openModal(targetDate);
+            } else {
+                // nếu modal đã mở nhưng có thể chưa mở, mở lại
+                if(!document.getElementById('modal').classList.contains('hidden') === false) {
+                    openModal(targetDate);
+                }
+            }
+            // Đợi một chút để modal hiển thị rồi fill
+            setTimeout(() => {
+                const nameInput = document.getElementById('studentName');
+                const feeInput = document.getElementById('lessonFee');
+                if(nameInput) nameInput.value = studentName;
+                if(feeInput && defaultFee) feeInput.value = defaultFee;
+            }, 50);
+        }
+        
+        // Hàm lưu hoặc cập nhật học sinh quen
+        function updateFamiliarStudent(name, fee) {
+            if(!name) return;
+            if(!db.familiarStudents) db.familiarStudents = {};
+            const existed = db.familiarStudents[name];
+            if(!existed) {
+                db.familiarStudents[name] = { defaultFee: fee, firstSeen: Date.now() };
+            } else {
+                // nếu học phí thay đổi, cập nhật defaultFee (ưu tiên mới nhất)
+                db.familiarStudents[name].defaultFee = fee;
+            }
+        }
+        
+        // Calendar
+        function renderCalendar() {
+            const grid = document.getElementById('calendarDays');
+            const title = document.getElementById('currentMonthYear');
+            if(!grid) return;
+            grid.innerHTML = '';
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            title.innerText = `Tháng ${String(month + 1).padStart(2, '0')}, ${year}`;
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+            for (let i = 0; i < startOffset; i++) grid.innerHTML += `<div class="day-cell p-2"></div>`;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                const lessons = (db.lessons[dateStr] || []);
+                grid.innerHTML += `
+                    <div onclick="openModal('${dateStr}')" class="day-cell p-2 relative cursor-pointer ${isToday ? 'today' : ''} ${lessons.length > 0 ? 'has-class' : ''}">
+                        <span class="text-sm font-black ${isToday ? 'text-amber-600' : 'text-stone-500'}">${day}</span>
+                        <div class="mt-1 flex flex-wrap gap-0.5">${lessons.map(() => '<span class="dot"></span>').join('')}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function openModal(dateStr) {
+            selectedDateStr = dateStr;
+            const modal = document.getElementById('modal');
+            const modalContent = modal.querySelector('div');
+            document.getElementById('modalDateTitle').innerText = formatDate(dateStr);
+            renderExistingLessons();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-y-full');
+            }, 10);
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const modalContent = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('translate-y-full');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            document.getElementById('studentName').value = '';
+            document.getElementById('lessonFee').value = '';
+        }
+        
+        function renderExistingLessons() {
+            const container = document.getElementById('existingLessons');
+            container.innerHTML = '';
+            const lessons = db.lessons[selectedDateStr] || [];
+            lessons.forEach((item, idx) => {
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-white/80 p-3 rounded-xl shadow-sm">
+                        <div><p class="font-black text-stone-700">${escapeHtml(item.name)}</p><p class="text-[10px] font-bold text-amber-500">${item.time} • ${formatMoney(item.fee)}đ</p></div>
+                        <button onclick="deleteLesson(${idx})" class="text-stone-300 hover:text-red-500 p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                    </div>
+                `;
+            });
+            if(lessons.length === 0) container.innerHTML = `<div class="text-center text-stone-400 text-sm p-3 italic">✨ Chưa có buổi dạy nào trong ngày này</div>`;
+        }
+        
+        function saveLesson() {
+            const name = document.getElementById('studentName').value.trim();
+            const time = document.getElementById('lessonTime').value;
+            let fee = parseInt(document.getElementById('lessonFee').value);
+            if(!name) return alert('Vui lòng nhập tên học sinh');
+            if(isNaN(fee) || fee <= 0) fee = 0;
+            if (!db.lessons[selectedDateStr]) db.lessons[selectedDateStr] = [];
+            db.lessons[selectedDateStr].push({ name, time, fee });
+            // Cập nhật học sinh quen
+            updateFamiliarStudent(name, fee);
+            syncAll();
+            renderExistingLessons();
+            document.getElementById('studentName').value = '';
+            document.getElementById('lessonFee').value = '';
+        }
+        
+        function deleteLesson(index) {
+            if(db.lessons[selectedDateStr]) {
+                db.lessons[selectedDateStr].splice(index, 1);
+                if(db.lessons[selectedDateStr].length === 0) delete db.lessons[selectedDateStr];
+                syncAll();
+                renderExistingLessons();
+            }
+        }
+        
+        function renderStatsAndTable() {
+            const tbody = document.getElementById('lessonTableBody');
+            const month = currentDate.getMonth() + 1;
+            const year = currentDate.getFullYear();
+            let totalRevenueMonth = 0, totalLessonsMonth = 0;
+            tbody.innerHTML = '';
+            const sortedDates = Object.keys(db.lessons || {}).sort();
+            sortedDates.forEach(date => {
+                const [y, m, d] = date.split('-').map(Number);
+                if (y === year && m === month) {
+                    db.lessons[date].forEach(ls => {
+                        totalRevenueMonth += ls.fee;
+                        totalLessonsMonth++;
+                        tbody.innerHTML += `<tr><td class="p-3 text-stone-500 font-bold text-xs">${d}/${m}</td><td class="p-3"><p class="font-bold text-stone-800">${escapeHtml(ls.name)}</p><p class="text-[10px] text-stone-400">${ls.time}</p></td><td class="p-3 text-right text-amber-600 font-black">${formatMoney(ls.fee)}đ</td></tr>`;
+                    });
+                }
+            });
+            if(totalLessonsMonth === 0) tbody.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-stone-300 italic">📭 Chưa có buổi dạy tháng này</td></tr>`;
+            document.getElementById('totalRevenue').innerText = formatMoney(totalRevenueMonth) + 'đ';
+            document.getElementById('totalLessons').innerText = totalLessonsMonth;
+        }
+        
+        function changeMonth(dir) {
+            currentDate.setMonth(currentDate.getMonth() + dir);
+            renderCalendar();
+            renderStatsAndTable();
+        }
+        
+        function formatDate(dateStr) { const d = new Date(dateStr); return d.toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        function formatMoney(num) { if(!num) return '0'; return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+        
+        // Khởi tạo dữ liệu mẫu nếu chưa có
+        if(!db.familiarStudents || Object.keys(db.familiarStudents).length === 0) {
+            db.familiarStudents = {
+                "Bảo Anh": { defaultFee: 250000 },
+                "Minh Khang": { defaultFee: 200000 },
+                "Phương Linh": { defaultFee: 300000 }
+            };
+        }
+        if(!db.lessons) db.lessons = {};
+        syncAll();
+        // Đảm bảo datalist
+        updateDatalist();
+    </script>
+</body>
+</html>
